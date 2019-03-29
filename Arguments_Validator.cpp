@@ -3,9 +3,11 @@
 #include <cstdlib>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fstream>
 
-#define  MIRROR_PERMS 744
-#define COMMON_PERMS 777
+
+#define  MIRROR_PERMS 0775
+#define COMMON_PERMS 0777
 
 //==CONSTRUCTOR-DESTRUCTOR==//
 
@@ -18,7 +20,7 @@ Arguments_Validator::~Arguments_Validator() {
 }
 
 //==API==//
-void Arguments_Validator::Validate_Arguments(Argument_data data) {
+void Arguments_Validator::Validate_Arguments(Argument_data& data) {
 
   //1.input_dir_name does not exists => error and termination
   Input_dir_check(data);
@@ -28,10 +30,7 @@ void Arguments_Validator::Validate_Arguments(Argument_data data) {
   Make_mirror_dir(data.getMirror_dir_name());
   Common_check_and_create(data);
   //4.create log file(if already exists delete the old one)
-
-
-
-
+  Make_log_file(data.getLog_file_name());
 }
 
 void Arguments_Validator::Common_check_and_create(const Argument_data &data) {
@@ -46,7 +45,7 @@ void Arguments_Validator::Input_dir_check(const Argument_data &data) {
 
 void Arguments_Validator::Mirror_dir_check(const Argument_data &data) {
   if(Check_for_directory(data.getMirror_dir_name()))
-    handler->Terminating_Error("EROOR:input file already exists");
+    handler->Terminating_Error("EROOR:mirror file already exists");
 }
 
 //==INNER FUNCTIONALITY==//
@@ -71,5 +70,12 @@ bool Arguments_Validator::Check_for_directory(const char *dir_name) {
     return false;
   closedir(directory);
   return true;
+}
+
+void Arguments_Validator::Make_log_file(const char *log_file_name) {
+
+  std::fstream log_file;
+  log_file.open(log_file_name,std::fstream::app);
+  log_file.close();
 }
 

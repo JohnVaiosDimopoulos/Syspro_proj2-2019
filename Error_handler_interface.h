@@ -4,6 +4,7 @@
 class Error_Handler_Interface{
  public:
   virtual void Terminating_Error(const char* message) = 0;
+  virtual void Common_Eroor(const char* message) =0;
 
 };
 

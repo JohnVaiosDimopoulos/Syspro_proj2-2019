@@ -7,6 +7,7 @@
 class Arguments_Validator {
  private:
   Error_Handler_Interface* handler;
+
   //==INNER FUNCTIONALLITY==//
   bool Check_for_directory(const char* dir_name);
   void Make_mirror_dir(const char* mirror_dir_name);
@@ -14,17 +15,16 @@ class Arguments_Validator {
   void Mirror_dir_check(const Argument_data &data);
   void Input_dir_check(const Argument_data &data);
   void Common_check_and_create(const Argument_data &data);
+  void Make_log_file(const char *log_file_name);
 
 
  public:
   //==CONSTRUCTOR-DESTRUCTOR==//
-  explicit Arguments_Validator(Error_Handler_Interface* handler);
+  Arguments_Validator(Error_Handler_Interface* handler);
   ~Arguments_Validator();
 
   //==API==//
-  void Validate_Arguments(Argument_data data);
-
-
+  void Validate_Arguments(Argument_data& data);
 };
 
 #endif //PROJ_2_ARGUMENTS_VALIDATOR_H
