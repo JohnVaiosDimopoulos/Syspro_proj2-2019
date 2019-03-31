@@ -33,6 +33,7 @@ void Cleaner::Delete_from_common(const char *common_file_name, const int id) {
 }
 
 void Cleaner::Delete_mirror_dir(const char *mirror_dir_name) {
+  //TODO:MAKE A RECURSIVE FUNCTION THAT DELETES MIRROR
   if(rmdir(mirror_dir_name)==-1)
     handler->Terminating_Error("rmdir failed");
 }

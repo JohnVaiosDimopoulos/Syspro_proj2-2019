@@ -2,12 +2,16 @@
 #define PROJ_2_FACTORY_H
 
 #include "Error_Handler.h"
-#include "Arguments_Validator.h"
-#include "Argument_Manager.h"
-#include "Client_initalizer.h"
-#include "Cleaner.h"
-#include "Clients_List.h"
-
+class Argument_Manager;
+class Arguments_Validator;
+class Cleaner;
+class Client_initalizer;
+class Clients_List;
+class common_dir_monitor;
+class Syncronizer;
+class Sender;
+class Receiver;
+class Deleter;
 
 class Factory {
 
@@ -18,7 +22,12 @@ class Factory {
   static Cleaner Create_cleaner();
   static Client_initalizer Create_Initializer();
   static Clients_List Create_List();
-
+  static Clients_List* Create_List_in_heap();
+  static common_dir_monitor Create_common_state();
+  static Syncronizer Create_Syncronizer();
+  static Sender Create_Sender();
+  static Receiver Create_Receiver();
+  static Deleter Create_Deleter();
 };
 
 #endif //PROJ_2_FACTORY_H

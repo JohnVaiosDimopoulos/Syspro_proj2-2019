@@ -1,4 +1,14 @@
 #include "Factory.h"
+#include "Arguments_Validator.h"
+#include "Argument_Manager.h"
+#include "Client_initalizer.h"
+#include "Cleaner.h"
+#include "Clients_List.h"
+#include "common_dir_monitor.h"
+#include "Sender.h"
+#include "Receiver.h"
+#include "Syncronizer.h"
+#include "Deleter.h"
 
 Error_Handler * Factory::Create_Error_Handler(){
   return new Error_Handler();
@@ -19,7 +29,33 @@ Cleaner Factory::Create_cleaner() {
 Client_initalizer Factory::Create_Initializer() {
   return Client_initalizer();
 }
+
 Clients_List Factory::Create_List() {
   return Clients_List(Create_Error_Handler());
+}
+
+
+common_dir_monitor Factory::Create_common_state() {
+  return common_dir_monitor(Create_Error_Handler(),Create_List());
+}
+
+Clients_List *Factory::Create_List_in_heap() {
+  return new Clients_List(Create_Error_Handler());
+}
+
+Syncronizer Factory::Create_Syncronizer() {
+  return Syncronizer(Create_common_state(),Create_Sender(),Create_Receiver(),Create_Deleter(),Create_Error_Handler());
+}
+
+Sender Factory::Create_Sender() {
+  return Sender(Create_Error_Handler());
+}
+
+Receiver Factory::Create_Receiver() {
+  return Receiver(Create_Error_Handler());
+}
+
+Deleter Factory::Create_Deleter() {
+  return Deleter(Create_Error_Handler());
 }
 

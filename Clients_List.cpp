@@ -8,8 +8,18 @@ Clients_List::Clients_List(Error_Handler_Interface *handler) {
 }
 
 Clients_List::~Clients_List() {
-  delete head;
-  delete handler;
+    delete head;
+    delete handler;
+}
+
+Clients_List::Clients_List(const Clients_List &src) {
+  head =NULL;
+  this->handler = Factory::Create_Error_Handler();
+  Client_list_node* curr = src.getHead();
+  while (curr!=NULL){
+    Insert(curr->getId());
+    curr = curr->getNext();
+  }
 }
 
 //==API==//
@@ -64,11 +74,6 @@ Client_list_node *Clients_List::Search(int id) {
 
 }
 
-//===GETTERS-SETTERS==//
-
-
-
-
 //==private==//
 
 bool Clients_List::Is_Empty() {
@@ -120,6 +125,35 @@ bool Clients_List::Want_to_delete_middle_element(int id) {
   }
   return false;
 
+}
+
+void Clients_List::swap_heads(Clients_List& src) {
+  Client_list_node* temp;
+  temp=src.getHead();
+  src.setHead(NULL);
+  this->head=temp;
+}
+
+
+//==OPERATORS==//
+
+Clients_List &Clients_List::operator=(Clients_List src){
+  if(src.getHead()!=NULL)
+    swap_heads(src);
+  return *this;
+}
+
+
+
+
+//==GETTERS-SETTERS==//
+
+Client_list_node *Clients_List::getHead() const {
+  return head;
+}
+
+void Clients_List::setHead(Client_list_node *head) {
+  Clients_List::head = head;
 }
 
 

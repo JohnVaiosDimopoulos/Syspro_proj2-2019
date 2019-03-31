@@ -13,11 +13,21 @@ class Clients_List {
   void Insert_In_filled_list(Client_list_node *new_node);
   bool Want_to_delete_first_element(int id);
   bool Want_to_delete_middle_element(int id);
-
+  void swap_heads(Clients_List& src);
  public:
+
   //==constructor-destructor==//
   Clients_List(Error_Handler_Interface *handler);
+  Clients_List(const Clients_List& src);
   ~Clients_List();
+
+  //Getters-Setters//
+  Client_list_node *getHead() const;
+  void setHead(Client_list_node *head);
+  //==OPERATOR==//
+
+  Clients_List& operator=(Clients_List src);
+
   //==API==//
   void Insert(int id);
   bool Delete(int id);
