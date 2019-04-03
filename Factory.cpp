@@ -9,6 +9,8 @@
 #include "Receiver.h"
 #include "Syncronizer.h"
 #include "Deleter.h"
+#include "Fifo_pipe_handler.h"
+#include "Read_Write_handler.h"
 
 Error_Handler * Factory::Create_Error_Handler(){
   return new Error_Handler();
@@ -48,14 +50,21 @@ Syncronizer Factory::Create_Syncronizer() {
 }
 
 Sender Factory::Create_Sender() {
-  return Sender(Create_Error_Handler());
+  return Sender(Create_Error_Handler(),Create_fifo_handler(),Create_read_write_handler());
 }
 
 Receiver Factory::Create_Receiver() {
-  return Receiver(Create_Error_Handler());
+  return Receiver(Create_Error_Handler(), Create_fifo_handler(),Create_read_write_handler());
 }
 
 Deleter Factory::Create_Deleter() {
   return Deleter(Create_Error_Handler());
+}
+Fifo_pipe_handler Factory::Create_fifo_handler() {
+  return Fifo_pipe_handler(Create_Error_Handler());
+}
+
+Read_Write_handler Factory::Create_read_write_handler() {
+  return Read_Write_handler(Create_Error_Handler());
 }
 

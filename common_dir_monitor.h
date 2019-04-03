@@ -18,7 +18,7 @@ class common_dir_monitor{
   DIR *Check_and_open_dir(const char *common_dir_name) const;
   char *get_file_path_name(const char *common_dir_name,const char* id_file_name) const;
   void Check_and_get_stat(struct stat* stat_buf,char* file_path_name);
-  Clients_List * get_common_state(const char *common_dir_name, int my_id);
+  Clients_List * get_common_state(const char *current_dir_name, int my_id);
   Clients_List * find_added(Clients_List &new_state);
   Clients_List * find_deleted(Clients_List &new_state);
   Clients_List **Allocate_array_to_return() const;

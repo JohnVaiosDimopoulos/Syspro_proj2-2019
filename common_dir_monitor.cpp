@@ -3,10 +3,10 @@
 #include "Factory.h"
 
 //==INNER-FUNCTIONALITY==//
-Clients_List * common_dir_monitor::get_common_state(const char *common_dir_name, int my_id) {
+Clients_List * common_dir_monitor::get_common_state(const char *current_dir_name, int my_id) {
 
   Clients_List* list = new Clients_List(Factory::Create_Error_Handler());
-  DIR* current_directory = Check_and_open_dir(common_dir_name);
+  DIR* current_directory = Check_and_open_dir(current_dir_name);
   struct dirent* dir_ptr;
 
   while ((dir_ptr=readdir(current_directory))!=NULL){
@@ -15,7 +15,7 @@ Clients_List * common_dir_monitor::get_common_state(const char *common_dir_name,
       continue;
 
     struct stat stat_buf;
-    char *file_path_name = get_file_path_name(common_dir_name, dir_ptr->d_name);
+    char *file_path_name = get_file_path_name(current_dir_name, dir_ptr->d_name);
     Check_and_get_stat(&stat_buf,file_path_name);
     if((stat_buf.st_mode &S_IFMT)==S_IFREG){
       int id = Tokenize_id_file_name(dir_ptr->d_name);
@@ -111,8 +111,6 @@ Clients_List** common_dir_monitor::update(const char *common_dir_name, int my_id
   delete new_state;
   return array_to_return;
 }
-
-
 
 
 //==CONSTRUCTOR-DESTRUCTOR==//

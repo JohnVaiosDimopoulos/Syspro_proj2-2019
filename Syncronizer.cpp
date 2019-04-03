@@ -16,8 +16,8 @@ void Syncronizer::Syncronize(const Argument_data &data) {
 
   while(true) {
     Clients_List **changes_array = monitor.update(data.getCommon_dir_name(), data.getId());
-    handle_new_clients(changes_array[0]);
-    handle_removed_clients(changes_array[1]);
+    handle_new_clients(changes_array[0],data);
+    handle_removed_clients(changes_array[1],data);
     Deallocate_array(changes_array);
     sleep(5);
   }
@@ -34,16 +34,16 @@ void Syncronizer::Deallocate_array(Clients_List **array) {
 
 }
 
-void Syncronizer::handle_new_clients(Clients_List *added_clients) {
+void Syncronizer::handle_new_clients(Clients_List *added_clients, const Argument_data &data) {
 
   for(Client_list_node* current=added_clients->getHead();current!=NULL;current=current->getNext()){
-    sender.Send_data(current->getId());
-    receiver.Receive_data(current->getId());
+    sender.Send_data(current->getId(),data);
+    receiver.Receive_data(current->getId(),data);
   }
 
 }
 
-void Syncronizer::handle_removed_clients(Clients_List *removed_clients) {
+void Syncronizer::handle_removed_clients(Clients_List *removed_clients, const Argument_data &data) {
 
   for(Client_list_node* current=removed_clients->getHead();current!=NULL; current=current->getNext()){
     deleter.Delete(current->getId());

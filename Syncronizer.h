@@ -18,8 +18,8 @@ class Syncronizer {
 
   //==INNER-FUNCTIONALITY==//
   void Deallocate_array(Clients_List** array);
-  void handle_new_clients(Clients_List *added_clients);
-  void handle_removed_clients(Clients_List *removed_clients);
+  void handle_new_clients(Clients_List *added_clients, const Argument_data &data);
+  void handle_removed_clients(Clients_List *removed_clients, const Argument_data &data);
 
  public:
   //==API==//

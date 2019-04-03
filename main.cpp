@@ -13,9 +13,10 @@ int main(int argc,char** argv){
 
   //we inject the dependencies in the function
   Argument_data data =initializer.Initialize(argc,argv,Factory::Create_Argument_Manager(),Factory::Create_Argument_Validator());
-  Syncronizer syncronizer = Factory::Create_Syncronizer();
-  syncronizer.Syncronize(data);
-
+  //Syncronizer syncronizer = Factory::Create_Syncronizer();
+  //syncronizer.Syncronize(data);
+  Sender sender = Factory::Create_Sender();
+  sender.Send_data(2,data);
 
   Cleaner cleaner = Factory::Create_cleaner();
   cleaner.clean(data);
