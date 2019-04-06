@@ -8,10 +8,16 @@
 #include <cstdlib>
 
 //==CONSTRUCTOR-DESTRUCTOR==//
-Sender::Sender(Error_Handler_Interface *handler, Fifo_pipe_handler fifo_handler,Read_Write_handler read_write_handler) : handler(handler),fifo_handler(fifo_handler),read_write_handler(read_write_handler) {}
+Sender::Sender(Error_Handler_Interface *handler,Fifo_pipe_handler *fifo_handler,Read_Write_handler *read_write_handler) {
+  this->handler = handler;
+  this->fifo_handler = fifo_handler;
+  this->read_write_handler = read_write_handler;
+
+}
 
 Sender::~Sender() {
   delete handler;
+  delete fifo_handler;
 }
 
 //==API==//
@@ -23,26 +29,34 @@ void Sender::Send_data(const int &client_id, const Argument_data &data) {
 
   // the child proccess continues;
   //Preparation
-  int fifo_pipe_fd = fifo_handler.Make_and_open_fifo(client_id,data);
-  DIR* input_dir_ptr = Open_dir(data.getInput_dir_name());
+  fifo_handler->Make_and_open_fifo(client_id,data);
   //go through the input_dir recursively
-  Recursively_go_Through_dir_and_send(NULL, data.getInput_dir_name(), fifo_pipe_fd,data.getBuffer_size());
+  Recursively_go_Through_dir_and_send(NULL, data.getInput_dir_name());
   //write 00 to let the receiver know that the input is done
-  Mark_end_of_input(fifo_pipe_fd);
+  Mark_end_of_input();
+  //send succes signal
+
   //close the pipe
-  close(fifo_pipe_fd);
+  fifo_handler->Close_fifo();
+  exit(0);
 }
 
 //==INNER-FUNCTIONALITY==//
 
-void Sender::Mark_end_of_input(const int &fifo_pipe_fd) {
-  write(fifo_pipe_fd,00,sizeof(u_int16_t));
+void Sender::Mark_end_of_file() {
+  u_int16_t end_of_file = 01;
+  fifo_handler->Write_in_fifo_with_custom_buffer_size(sizeof(u_int16_t),&end_of_file);
+}
+
+void Sender::Mark_end_of_input() {
+  u_int16_t end_bytes = 00;
+  fifo_handler->Write_in_fifo_with_custom_buffer_size(sizeof(u_int16_t),&end_bytes);
 }
 
 pid_t Sender::do_fork() {
 
   pid_t  pid;
-  if((pid=fork()==-1))
+  if((pid=fork())==-1)
     handler->Terminating_Error("fork_failed");
   return pid;
 
@@ -52,16 +66,15 @@ DIR * Sender::Open_dir(const char *input_dir_name) {
 
   DIR* dir_ptr;
   if((dir_ptr=opendir(input_dir_name))==NULL)
-    handler->Terminating_Error("FAILED TO OPEN INPUT DIR IN THE SENDRER");
+    handler->Terminating_Error("FAILED TO OPEN INPUT DIR IN THE SENDER");
 
   return dir_ptr;
 }
 
-void Sender::Recursively_go_Through_dir_and_send(const char *current_path_relative_to_input_dir,const char *current_dir_full_path,const int &fifo_pipe_fd,const int &pipe_buffer) {
+void Sender::Recursively_go_Through_dir_and_send(const char *current_path_relative_to_input_dir,const char *current_dir_full_path) {
 
 
   DIR* current_dir_ptr = Open_dir(current_dir_full_path);
-  std::cout<<"IN DIR : "<<current_dir_full_path<<std::endl;
   struct dirent* current_dir;
   while ((current_dir=readdir(current_dir_ptr))!=NULL){
 
@@ -77,7 +90,7 @@ void Sender::Recursively_go_Through_dir_and_send(const char *current_path_relati
       //1.construct the relative to input dir path_name
       char *file_path_name_relative_to_input =create_path_name_relative_to_input(current_path_relative_to_input_dir, current_dir->d_name);
       //2.send the file
-      Send_through_pipe(full_path_name,file_path_name_relative_to_input,fifo_pipe_fd,pipe_buffer);
+      Send_through_pipe(full_path_name, file_path_name_relative_to_input);
       Deallocate_strings(full_path_name, file_path_name_relative_to_input);
       continue;
     }
@@ -85,7 +98,7 @@ void Sender::Recursively_go_Through_dir_and_send(const char *current_path_relati
       //1.construct the relative to input_path
       char *dir_path_name_relative_to_input =create_path_name_relative_to_input(current_path_relative_to_input_dir, current_dir->d_name);
       //2.call recursively
-      Recursively_go_Through_dir_and_send(dir_path_name_relative_to_input,full_path_name,fifo_pipe_fd,pipe_buffer);
+      Recursively_go_Through_dir_and_send(dir_path_name_relative_to_input, full_path_name);
       Deallocate_strings(full_path_name, dir_path_name_relative_to_input);
     }
   }
@@ -138,7 +151,8 @@ bool Sender::Is_Dir(struct stat *stat_buf) {
   return false;
 }
 
-void Sender::Send_through_pipe(const char *full_file_path,const char *file_path_relative_to_input,const int &fifo_pipe_fd,const int &pipe_buffer) {
+void Sender::Send_through_pipe(const char *full_file_path, const char *file_path_relative_to_input) {
+
 
   struct stat stat_buf;
 
@@ -146,36 +160,58 @@ void Sender::Send_through_pipe(const char *full_file_path,const char *file_path_
   u_int32_t file_size = stat_buf.st_size;
   u_int16_t file_name_size = strlen(file_path_relative_to_input)+1;
   //write file name size and name_relative to path
-  read_write_handler.Write_and_check(fifo_pipe_fd,&file_name_size, sizeof(u_int16_t));
-  read_write_handler.Write_and_check(fifo_pipe_fd,file_path_relative_to_input,file_name_size);
+  fifo_handler->Write_in_fifo_with_custom_buffer_size(sizeof(u_int16_t),&file_size);
+  fifo_handler->Write_in_fifo_with_custom_buffer_size(file_size,file_path_relative_to_input);
+
+
   //write file size
-  read_write_handler.Write_and_check(fifo_pipe_fd,&file_size, sizeof(u_int32_t));
-  int file_fd = open(full_file_path,O_RDONLY);
+  fifo_handler->Write_in_fifo_with_custom_buffer_size(sizeof(u_int32_t),&file_size);
+
+
+  int file_fd;
+  file_fd=open(full_file_path,O_RDONLY);
+
   // start reading file contents and write them in the pipe
-  Read_from_file_and_write_in_pipe(fifo_pipe_fd, pipe_buffer, file_fd,file_size);
+  Read_from_file_and_write_in_pipe(file_fd, file_size);
+  Mark_end_of_file();
+  close(file_fd);
 }
 
-size_t Sender::Read_from_file_and_write_in_pipe(const int &fifo_pipe_fd,const int &fifo_buffer_size,const int &input_file_fd,const u_int32_t &file_size) {
+void Sender::Read_from_file_and_write_in_pipe(const int &input_file_fd, const u_int32_t &file_size) {
 
   u_int32_t bytes_left_to_send = file_size;
-  int buffer_size = fifo_buffer_size;
-  char buffer[fifo_buffer_size];
-  size_t  read_ret_value;
+  int local_buffer_size = fifo_handler->Get_buffer_size();
+  char buffer[fifo_handler->Get_buffer_size()];
 
-  while (read_write_handler.Read_and_check(input_file_fd,buffer,buffer_size)){
-    read_write_handler.Write_and_check(fifo_pipe_fd,buffer,buffer_size);
-    bytes_left_to_send=Caluculate_bytes_left_to_send(bytes_left_to_send,&buffer_size);
+  if(bytes_left_to_send==0)
+    return;
+
+  if(bytes_left_to_send<local_buffer_size)
+    local_buffer_size=bytes_left_to_send;
+
+
+
+
+  while (read_write_handler->Read_and_check_no_timeout(input_file_fd, buffer, local_buffer_size)){
+    fifo_handler->Write_in_fifo_with_custom_buffer_size(local_buffer_size,buffer);
+    bytes_left_to_send=Caluculate_bytes_left_to_send(bytes_left_to_send,local_buffer_size);
+    local_buffer_size=Calculate_new_buffer_size(bytes_left_to_send,local_buffer_size);
   }
-
-
 }
 
-u_int32_t Sender::Caluculate_bytes_left_to_send(const u_int32_t &bytes_left_to_send, int* buffer_size) {
-  u_int32_t new_bytes_left = bytes_left_to_send-(*buffer_size);
-  if(new_bytes_left<(*buffer_size))
-    *buffer_size = new_bytes_left;
+u_int32_t Sender::Caluculate_bytes_left_to_send(const u_int32_t &bytes_left_to_send, int buffer_size) {
+  u_int32_t new_bytes_left = bytes_left_to_send-buffer_size;
   return new_bytes_left;
 }
+
+int Sender::Calculate_new_buffer_size(const u_int32_t &bytes_left_to_send, int buffer_size) {
+
+  if(bytes_left_to_send<buffer_size)
+    return bytes_left_to_send;
+  return buffer_size;
+}
+
+
 
 
 

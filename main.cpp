@@ -16,10 +16,13 @@ int main(int argc,char** argv){
   //Syncronizer syncronizer = Factory::Create_Syncronizer();
   //syncronizer.Syncronize(data);
   Sender sender = Factory::Create_Sender();
-  sender.Send_data(2,data);
+  sender.Send_data(1,data);
+  Receiver receiver = Factory::Create_Receiver();
+  receiver.Receive_data(1,data);
 
-  Cleaner cleaner = Factory::Create_cleaner();
-  cleaner.clean(data);
+
+  //Cleaner cleaner = Factory::Create_cleaner();
+  //cleaner.clean(data);
 
 
 

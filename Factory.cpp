@@ -50,7 +50,7 @@ Syncronizer Factory::Create_Syncronizer() {
 }
 
 Sender Factory::Create_Sender() {
-  return Sender(Create_Error_Handler(),Create_fifo_handler(),Create_read_write_handler());
+  return Sender(Create_Error_Handler(), Create_fifo_handler(), Create_read_write_handler());
 }
 
 Receiver Factory::Create_Receiver() {
@@ -60,11 +60,11 @@ Receiver Factory::Create_Receiver() {
 Deleter Factory::Create_Deleter() {
   return Deleter(Create_Error_Handler());
 }
-Fifo_pipe_handler Factory::Create_fifo_handler() {
-  return Fifo_pipe_handler(Create_Error_Handler());
+Fifo_pipe_handler * Factory::Create_fifo_handler() {
+  return new Fifo_pipe_handler(Create_Error_Handler(),Create_read_write_handler());
 }
 
-Read_Write_handler Factory::Create_read_write_handler() {
-  return Read_Write_handler(Create_Error_Handler());
+Read_Write_handler * Factory::Create_read_write_handler() {
+  return new Read_Write_handler(Create_Error_Handler());
 }
 

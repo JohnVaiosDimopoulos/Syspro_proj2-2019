@@ -30,8 +30,8 @@ class Factory {
   static Sender Create_Sender();
   static Receiver Create_Receiver();
   static Deleter Create_Deleter();
-  static Fifo_pipe_handler Create_fifo_handler();
-  static Read_Write_handler Create_read_write_handler();
+  static Fifo_pipe_handler * Create_fifo_handler();
+  static Read_Write_handler * Create_read_write_handler();
 };
 
 #endif //PROJ_2_FACTORY_H
