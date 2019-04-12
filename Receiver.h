@@ -4,6 +4,7 @@
 #include "Argument_data.h"
 #include "Fifo_pipe_handler.h"
 #include "Read_Write_handler.h"
+#include "Log_file_handler.h"
 
 class Receiver {
  private:
@@ -11,9 +12,10 @@ class Receiver {
   Fifo_pipe_handler* fifo_handler;
   Read_Write_handler* read_write_handler;
 
+
   //==INNER-FUNCTIONALITY==//
   bool do_fork();
-  void Get_input(const char *root_dir_name);
+  void Get_input(const char *root_dir_name, Log_file_handler *log_file_handler);
   char * Create_dir_for_sender_in_mirror(const int &client_id, const char *mirror_dir_path_name);
   char* Construct_new_dir_path_name(const int& client_id,const char* mirror_dir_path_name);
   char *Read_filename();
@@ -27,10 +29,9 @@ class Receiver {
   int Calculate_new_local_buffer_size(const u_int32_t& bytes_left_to_receice,const int& local_buffer_size);
 
 
-
  public:
   //==API==//
-  void Receive_data(const int &client_id, const Argument_data &data);
+  int Receive_data(const int &client_id, const Argument_data &data, Log_file_handler log_file_handler);
 
   //==CONSTRUCTOR-DESTRUCTOR==//
   Receiver(Error_Handler_Interface *handler,Fifo_pipe_handler* fifo_handler,Read_Write_handler* read_write_handler);

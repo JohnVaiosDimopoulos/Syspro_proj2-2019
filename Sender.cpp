@@ -2,10 +2,12 @@
 #include "Argument_data.h"
 #include "String_Manager.h"
 #include <unistd.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <iostream>
 #include <cstdlib>
+#include "Log_file_handler.h"
 
 //==CONSTRUCTOR-DESTRUCTOR==//
 Sender::Sender(Error_Handler_Interface *handler,Fifo_pipe_handler *fifo_handler,Read_Write_handler *read_write_handler) {
@@ -17,36 +19,35 @@ Sender::Sender(Error_Handler_Interface *handler,Fifo_pipe_handler *fifo_handler,
 
 Sender::~Sender() {
   delete handler;
+  delete read_write_handler;
   delete fifo_handler;
 }
 
 //==API==//
-void Sender::Send_data(const int &client_id, const Argument_data &data) {
+int Sender::Send_data(const int &client_id, const Argument_data &data, Log_file_handler log_file_handler) {
 
   // the parent gets value different than 0 and it returns
-  if(do_fork())
-    return;
+  int pid = do_fork();
+  if(pid)
+    return pid;
 
   // the child proccess continues;
   //Preparation
   fifo_handler->Make_and_open_fifo(client_id,data);
   //go through the input_dir recursively
-  Recursively_go_Through_dir_and_send(NULL, data.getInput_dir_name());
+  Recursively_go_Through_dir_and_send(NULL, data.getInput_dir_name(), &log_file_handler);
   //write 00 to let the receiver know that the input is done
   Mark_end_of_input();
   //send succes signal
 
   //close the pipe
   fifo_handler->Close_fifo();
+  kill(getppid(),SIGCHLD);
   exit(0);
 }
 
 //==INNER-FUNCTIONALITY==//
 
-void Sender::Mark_end_of_file() {
-  u_int16_t end_of_file = 01;
-  fifo_handler->Write_in_fifo_with_custom_buffer_size(sizeof(u_int16_t),&end_of_file);
-}
 
 void Sender::Mark_end_of_input() {
   u_int16_t end_bytes = 00;
@@ -65,13 +66,15 @@ pid_t Sender::do_fork() {
 DIR * Sender::Open_dir(const char *input_dir_name) {
 
   DIR* dir_ptr;
-  if((dir_ptr=opendir(input_dir_name))==NULL)
+  if((dir_ptr=opendir(input_dir_name))==NULL) {
+    kill(getppid(),SIGUSR1);
     handler->Terminating_Error("FAILED TO OPEN INPUT DIR IN THE SENDER");
+  }
 
   return dir_ptr;
 }
 
-void Sender::Recursively_go_Through_dir_and_send(const char *current_path_relative_to_input_dir,const char *current_dir_full_path) {
+void Sender::Recursively_go_Through_dir_and_send(const char *current_path_relative_to_input_dir,const char *current_dir_full_path,Log_file_handler *log_file_handler) {
 
 
   DIR* current_dir_ptr = Open_dir(current_dir_full_path);
@@ -90,7 +93,7 @@ void Sender::Recursively_go_Through_dir_and_send(const char *current_path_relati
       //1.construct the relative to input dir path_name
       char *file_path_name_relative_to_input =create_path_name_relative_to_input(current_path_relative_to_input_dir, current_dir->d_name);
       //2.send the file
-      Send_through_pipe(full_path_name, file_path_name_relative_to_input);
+      Send_through_pipe(full_path_name, file_path_name_relative_to_input,log_file_handler);
       Deallocate_strings(full_path_name, file_path_name_relative_to_input);
       continue;
     }
@@ -98,7 +101,7 @@ void Sender::Recursively_go_Through_dir_and_send(const char *current_path_relati
       //1.construct the relative to input_path
       char *dir_path_name_relative_to_input =create_path_name_relative_to_input(current_path_relative_to_input_dir, current_dir->d_name);
       //2.call recursively
-      Recursively_go_Through_dir_and_send(dir_path_name_relative_to_input, full_path_name);
+      Recursively_go_Through_dir_and_send(dir_path_name_relative_to_input, full_path_name,log_file_handler);
       Deallocate_strings(full_path_name, dir_path_name_relative_to_input);
     }
   }
@@ -151,7 +154,7 @@ bool Sender::Is_Dir(struct stat *stat_buf) {
   return false;
 }
 
-void Sender::Send_through_pipe(const char *full_file_path, const char *file_path_relative_to_input) {
+void Sender::Send_through_pipe(const char *full_file_path,const char *file_path_relative_to_input,Log_file_handler *log_file_handler) {
 
 
   struct stat stat_buf;
@@ -173,7 +176,7 @@ void Sender::Send_through_pipe(const char *full_file_path, const char *file_path
 
   // start reading file contents and write them in the pipe
   Read_from_file_and_write_in_pipe(file_fd, file_size);
-  Mark_end_of_file();
+  log_file_handler->Log_Sended_file(file_size);
   close(file_fd);
 }
 
@@ -188,8 +191,6 @@ void Sender::Read_from_file_and_write_in_pipe(const int &input_file_fd, const u_
 
   if(bytes_left_to_send<local_buffer_size)
     local_buffer_size=bytes_left_to_send;
-
-
 
 
   while (read_write_handler->Read_and_check_no_timeout(input_file_fd, buffer, local_buffer_size)){

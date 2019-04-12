@@ -15,6 +15,7 @@ class Argument_data {
   Argument_data();
   ~Argument_data();
 
+
   //==setters-getters==//
   char *getCommon_dir_name() const;
   void setCommon_dir_name(char *common_dir_name);

@@ -2,6 +2,7 @@
 #define PROJ_2_FACTORY_H
 
 #include "Error_Handler.h"
+#include "child_status.h"
 class Argument_Manager;
 class Arguments_Validator;
 class Cleaner;
@@ -14,6 +15,9 @@ class Receiver;
 class Deleter;
 class Fifo_pipe_handler;
 class Read_Write_handler;
+class Log_file_handler;
+class Signalfd_handler;
+class Status_Record;
 
 class Factory {
 
@@ -32,6 +36,8 @@ class Factory {
   static Deleter Create_Deleter();
   static Fifo_pipe_handler * Create_fifo_handler();
   static Read_Write_handler * Create_read_write_handler();
+  static Signalfd_handler Create_Signalfd_handler();
+  static Status_Record Create_Status_Record();
 };
 
 #endif //PROJ_2_FACTORY_H

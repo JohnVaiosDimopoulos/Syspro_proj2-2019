@@ -33,6 +33,7 @@ class Clients_List {
   bool Delete(int id);
   Client_list_node* Search(int id);
   void Print();
+  int Get_length();
 
 
 };

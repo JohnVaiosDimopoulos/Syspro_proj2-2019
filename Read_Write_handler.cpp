@@ -1,5 +1,6 @@
 #include "Read_Write_handler.h"
 #include <unistd.h>
+#include <signal.h>
 
 //==CONSTRUCTOR-DESTRUCTOR==//
 
@@ -16,10 +17,8 @@ Read_Write_handler::~Read_Write_handler() {
 int Read_Write_handler::Write_and_check(const int &file_desc, const void *buffer, const size_t &size) {
 
   if(write(file_desc,buffer,size)==-1){
-    handler->Common_Eroor("Write in sender failed");
-    //send signal
-    //TODO signal here
-    exit(-1);
+    kill(getppid(),SIGUSR1);
+    handler->Terminating_Error("write failed");
   }
 }
 
@@ -30,9 +29,8 @@ bool Read_Write_handler::Read_and_check_no_timeout(const int &file_desc, void *b
     return true;
 
   if(ret_value==-1){
-    handler->Common_Eroor("READ ERROR");
-    //TODO signal here
-    //send_signal;
+    kill(getppid(),SIGUSR1);
+    handler->Terminating_Error("Read failed");
   }
 
 }
@@ -45,9 +43,8 @@ bool Read_Write_handler::Read_and_check_with_timeout(const int &fle_desc, void *
   while (1){
 
     if(sec_waited>30){
-      //TODO:send timeout_signal
-      std::cout<<"timeout"<<std::endl;
-      exit(-1);
+      kill(getppid(),SIGUSR2);
+      handler->Terminating_Error("proccess timed out");
     }
 
     read_ret_value = read(fle_desc,buffer,size);
@@ -58,9 +55,8 @@ bool Read_Write_handler::Read_and_check_with_timeout(const int &fle_desc, void *
       continue;
       }
       else{
-        handler->Terminating_Error("ERROR IN READ");
-        exit(-1);
-        //TODO send signal;
+        kill(getppid(),SIGUSR1);
+        handler->Terminating_Error("read with timeout failed");
       }
     }
     else

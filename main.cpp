@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unistd.h>
 #include "Factory.h"
 #include "Argument_data.h"
 #include "Arguments_Validator.h"
@@ -12,19 +13,17 @@ int main(int argc,char** argv){
   Client_initalizer initializer = Factory::Create_Initializer();
 
   //we inject the dependencies in the function
-  Argument_data data =initializer.Initialize(argc,argv,Factory::Create_Argument_Manager(),Factory::Create_Argument_Validator());
-  //Syncronizer syncronizer = Factory::Create_Syncronizer();
-  //syncronizer.Syncronize(data);
+  Argument_data data = initializer.Initialize(argc,argv,Factory::Create_Argument_Manager(),Factory::Create_Argument_Validator());
+//  Syncronizer syncronizer = Factory::Create_Syncronizer();
+//  syncronizer.Syncronize(data);
   Sender sender = Factory::Create_Sender();
-  sender.Send_data(1,data);
+  sender.Send_data(1, data,Log_file_handler(data.getLog_file_name(),data.getId()));
   Receiver receiver = Factory::Create_Receiver();
-  receiver.Receive_data(1,data);
+  receiver.Receive_data(1, data, Log_file_handler(data.getLog_file_name(),data.getId()));
 
 
-  //Cleaner cleaner = Factory::Create_cleaner();
-  //cleaner.clean(data);
+  sleep(10);
 
-
-
-
+  Cleaner cleaner = Factory::Create_cleaner();
+  cleaner.clean(data);
 }

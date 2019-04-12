@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
+#include <signal.h>
 
 //==CONSTRUCTOR-DESTRUCTOR==//
 Fifo_pipe_handler::Fifo_pipe_handler(Error_Handler_Interface *handler,Read_Write_handler* read_write_handler) : error_handler(handler),read_write_handler(read_write_handler),fifo_path_name(NULL),fifo_fd(-1),buffer_size(-1) {}
@@ -59,7 +60,8 @@ void Fifo_pipe_handler::Close_fifo() {
 void Fifo_pipe_handler::Delete_fifo() {
   std::cout<<"deleting fifo"<<std::endl;
   if(remove(fifo_path_name)==-1){
-    std::cout<<"failed to remove fifo"<<std::endl;
+    kill(getppid(),SIGUSR1);
+    error_handler->Terminating_Error("failed to remove fifo");
   }
 }
 
@@ -73,8 +75,10 @@ void Fifo_pipe_handler::Set_to_Non_blocking() {
 
 void Fifo_pipe_handler::Make_fifo(const char *fifo_name) {
 
-  if (mkfifo(fifo_name, 0666) == -1)
+  if (mkfifo(fifo_name, 0666) == -1){
+    kill(getppid(),SIGUSR1);
     error_handler->Terminating_Error("FAILED TO MAKE FIFO PIPE");
+  }
 
 }
 
@@ -113,7 +117,7 @@ int Fifo_pipe_handler::Get_fifo_fd_for_sender(const char *fifo_name) {
 
   int fifo_pipe_fd;
     if ((fifo_pipe_fd = open(fifo_name,O_WRONLY))==-1) {
-        perror("error");
+        kill(getppid(),SIGUSR1);
         error_handler->Terminating_Error("FAILED TO OPEN FIFO PIPE IN THE SENDER");
     }
     return fifo_pipe_fd;
@@ -126,10 +130,12 @@ int Fifo_pipe_handler::Get_fifo_fd_for_receiver(const char *fifo_name) {
   bool wait = true;
   while (wait) {
     if ((fifo_pipe_fd = open(fifo_name, O_RDONLY)) == -1) {
+
+      //if the pipe doest not exist we wait for the sender to make the pipe
       if(errno==2)
         continue;
-      std::cout<<errno<<std::endl;
-      perror("error");
+
+      kill(getppid(),SIGUSR1);
       error_handler->Terminating_Error("FAILED TO OPEN FIFO PIPE IN THE RECEIVER");
     }
     return fifo_pipe_fd;

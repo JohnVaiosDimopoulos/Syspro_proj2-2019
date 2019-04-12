@@ -8,24 +8,27 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
 
 //==API==//
-void Receiver::Receive_data(const int &client_id, const Argument_data &data) {
+int Receiver::Receive_data(const int &client_id, const Argument_data &data, Log_file_handler log_file_handler) {
 
- //if(do_fork())
-    //return;
+ int pid = do_fork();
+ if(pid)
+    return pid;
 
   //1.make the proper_dir
   char* root_dir_name = Create_dir_for_sender_in_mirror(client_id,data.getMirror_dir_name());
   //2.open the fifo;
   fifo_handler->Open_fifo_at_receiver_non_blocking(client_id, data);
-  Get_input(root_dir_name);
+  Get_input(root_dir_name,&log_file_handler);
   //send_succes signal;
 
   //2. deallocate
   fifo_handler->Close_fifo();
   fifo_handler->Delete_fifo();
   free(root_dir_name);
+  kill(getppid(),SIGCHLD);
   exit(0);
 }
 
@@ -60,7 +63,10 @@ char * Receiver::Create_dir_for_sender_in_mirror(const int &client_id, const cha
   //1.construct the dir name;
   char* new_dir_name = Construct_new_dir_path_name(client_id,mirror_dir_path_name);
   //2.make the dir
-  mkdir(new_dir_name,0777);
+  if(mkdir(new_dir_name,0777)==-1){
+    kill(getppid(),SIGUSR1);
+    handler->Terminating_Error("Failed to make dir in mirror");
+  }
   return new_dir_name;
 
 
@@ -78,16 +84,20 @@ char *Receiver::Construct_new_dir_path_name(const int &client_id, const char *mi
 
 }
 
-void Receiver::Get_input(const char *root_dir_name) {
+void Receiver::Get_input(const char *root_dir_name, Log_file_handler *log_file_handler) {
 
   bool input_done= false;
   fifo_handler->Set_to_Non_blocking();
   while (!input_done){
     char* filename = Read_filename();
+    if(filename==NULL)
+      return;
+
     char* file_full_path_name = Construct_full_file_path_name(filename,root_dir_name);
     u_int32_t file_size = Read_file_size();
     Read_from_pipe_and_write_in_file(file_full_path_name, file_size);
-    input_done = Check_if_input_is_done();
+    log_file_handler->Log_Received_file(file_size);
+
     free(file_full_path_name);
     free(filename);
   }
@@ -98,6 +108,9 @@ char *Receiver::Read_filename() {
 
   u_int16_t filename_size;
   fifo_handler->Read_in_fifo_with_custom_buffer_size_with_timeout(sizeof(u_int16_t),&filename_size);
+
+  if(filename_size==0)
+    return NULL;
 
   char* filename = String_Manager::Allocate(filename_size+1);
   fifo_handler->Read_in_fifo_with_custom_buffer_size_with_timeout(filename_size,filename);
@@ -194,11 +207,7 @@ void Receiver::Check_if_dir_exists_and_create_if_needed(const char *full_path_un
 void Receiver::Create_file_in_mirror(const char *full_path_name) {
 
   int fd;
-  if((fd=open(full_path_name,O_CREAT,0777))==-1){
-    //error and signal
-    //TODO signal here
-
-  }
+  fd=open(full_path_name,O_CREAT,0777);
   close(fd);
 }
 

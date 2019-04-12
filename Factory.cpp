@@ -11,6 +11,9 @@
 #include "Deleter.h"
 #include "Fifo_pipe_handler.h"
 #include "Read_Write_handler.h"
+#include "Log_file_handler.h"
+#include "Signalfd_handler.h"
+#include "Status_Record.h"
 
 Error_Handler * Factory::Create_Error_Handler(){
   return new Error_Handler();
@@ -46,7 +49,7 @@ Clients_List *Factory::Create_List_in_heap() {
 }
 
 Syncronizer Factory::Create_Syncronizer() {
-  return Syncronizer(Create_common_state(),Create_Sender(),Create_Receiver(),Create_Deleter(),Create_Error_Handler());
+  return Syncronizer(Create_common_state(),Create_Sender(),Create_Receiver(),Create_Deleter(),Create_Error_Handler(),Create_cleaner(),Create_Signalfd_handler());
 }
 
 Sender Factory::Create_Sender() {
@@ -58,7 +61,7 @@ Receiver Factory::Create_Receiver() {
 }
 
 Deleter Factory::Create_Deleter() {
-  return Deleter(Create_Error_Handler());
+  return Deleter(Create_Error_Handler(), Create_cleaner());
 }
 Fifo_pipe_handler * Factory::Create_fifo_handler() {
   return new Fifo_pipe_handler(Create_Error_Handler(),Create_read_write_handler());
@@ -67,4 +70,13 @@ Fifo_pipe_handler * Factory::Create_fifo_handler() {
 Read_Write_handler * Factory::Create_read_write_handler() {
   return new Read_Write_handler(Create_Error_Handler());
 }
+
+Signalfd_handler Factory::Create_Signalfd_handler() {
+  return Signalfd_handler(Create_Error_Handler());
+}
+
+Status_Record Factory::Create_Status_Record() {
+  return Status_Record(Create_Error_Handler());
+}
+
 

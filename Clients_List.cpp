@@ -156,6 +156,15 @@ void Clients_List::setHead(Client_list_node *head) {
   Clients_List::head = head;
 }
 
+int Clients_List::Get_length() {
+  int lenght=0;
+
+  for(Client_list_node* current = head;current!=NULL;current=current->getNext())
+    lenght++;
+
+  return lenght;
+}
+
 
 
 
