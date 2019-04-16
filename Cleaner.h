@@ -9,7 +9,7 @@ class Cleaner {
 
  private:
   Error_Handler_Interface* handler;
-  void Delete_from_common(const char* common_file_name,const int id);
+  void Delete_from_common(const char *common_file_name);
 
 
 
@@ -18,8 +18,8 @@ class Cleaner {
   Cleaner(Error_Handler_Interface* handler);
   ~Cleaner();
   void Delete_dir(const char *current_dir_name);
-  void clean(const Argument_data &data);
-
+  void clean(char *mirror_dir_name, char *common_dir_name);
+  Error_Handler_Interface *getHandler() const;
 
 };
 

@@ -14,7 +14,7 @@ class Receiver {
 
 
   //==INNER-FUNCTIONALITY==//
-  bool do_fork();
+  int do_fork();
   void Get_input(const char *root_dir_name, Log_file_handler *log_file_handler);
   char * Create_dir_for_sender_in_mirror(const int &client_id, const char *mirror_dir_path_name);
   char* Construct_new_dir_path_name(const int& client_id,const char* mirror_dir_path_name);

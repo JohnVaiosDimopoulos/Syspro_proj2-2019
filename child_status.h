@@ -9,6 +9,7 @@ class child_status {
  private:
   status current_status;
   pid_t child_id;
+  // the client that this child is sending or receiving
   int client_id;
   int num_of_retries;
  public:

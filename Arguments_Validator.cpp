@@ -39,11 +39,13 @@ void Arguments_Validator::Common_check_and_create(const Argument_data &data) {
 }
 
 void Arguments_Validator::Input_dir_check(const Argument_data &data) {
+  //check if input dir exists
   if(!Check_for_directory(data.getInput_dir_name()))
     handler->Terminating_Error("ERROR:input directory does not exists");
 }
 
 void Arguments_Validator::Mirror_dir_check(const Argument_data &data) {
+  //check if mirror dir exists
   if(Check_for_directory(data.getMirror_dir_name()))
     handler->Terminating_Error("EROOR:mirror file already exists");
 }
@@ -65,6 +67,7 @@ void Arguments_Validator::Make_common_dir(const char *common_dir_name) {
 
 bool Arguments_Validator::Check_for_directory(const char *dir_name) {
 
+  // returns true if the dir exists
   DIR* directory;
   if((directory=opendir(dir_name))==NULL)
     return false;
@@ -74,8 +77,16 @@ bool Arguments_Validator::Check_for_directory(const char *dir_name) {
 
 void Arguments_Validator::Make_log_file(const char *log_file_name) {
 
+  if(Check_if_logfile_exists(log_file_name))
+    remove(log_file_name);
+
   std::fstream log_file;
   log_file.open(log_file_name,std::fstream::app);
   log_file.close();
+}
+
+bool Arguments_Validator::Check_if_logfile_exists(const char *log_file_name) {
+  struct stat stat_buf;
+  return (stat(log_file_name,&stat_buf)==0);
 }
 

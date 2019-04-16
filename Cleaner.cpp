@@ -18,50 +18,57 @@ Cleaner::~Cleaner() {
 
 
 //==API==//
-void Cleaner::clean(const Argument_data &data) {
+void Cleaner::clean(char *mirror_dir_name, char *common_dir_name) {
 
   //1.delete id_file;
-  Delete_from_common(data.getCommon_dir_name(), data.getId());
+  Delete_from_common(common_dir_name);
   //2. delete_mirror_recursively
-  Delete_dir(data.getMirror_dir_name());
+  Delete_dir(mirror_dir_name);
 
 }
-//==INNER-FUNCTIONALITY==//
 
-void Cleaner::Delete_from_common(const char *common_file_name, const int id) {
 
-  char file_path[200];
-  sprintf(file_path,"%s/%d.id",common_file_name,id);
-  if(remove(file_path)!=0)
+void Cleaner::Delete_from_common(const char *common_file_name) {
+
+  //removes the clients .id file from common
+  if(remove(common_file_name)!=0)
     handler->Terminating_Error("Error deleting id file");
 }
 
 void Cleaner::Delete_dir(const char *current_dir_name) {
-  //TODO:MAKE A RECURSIVE FUNCTION THAT DELETES MIRROR
+  // recursively deletes a dir
   DIR*  current_dir;
   struct dirent* dir_ptr;
   struct stat stat_buf;
 
+  // check if dir exists and open it
   if((current_dir=opendir(current_dir_name))==NULL)
     handler->Terminating_Error("failed to open dir durring mirror dir deletion");
 
+  // start reading from dir
   while((dir_ptr=readdir(current_dir))!=NULL){
 
+    //ignore hidden files
     if(dir_ptr->d_name[0]=='.')
       continue;
 
+    // get the path of current file
     char* newpath = String_Manager::Allocate((strlen(current_dir_name)+strlen(dir_ptr->d_name)+2));
     sprintf(newpath,"%s/%s",current_dir_name,dir_ptr->d_name);
 
+    //check the type
     if((stat(newpath,&stat_buf))==-1)
       handler->Terminating_Error("Stat failed");
 
+    //if it is a directory call recursively
     if((stat_buf.st_mode & S_IFMT)==S_IFDIR){
       Delete_dir(newpath);
     } else
+      //if it is a file delete it
       remove(newpath);
     free(newpath);
   }
+  // after the current dir is empty we delete it
   rmdir(current_dir_name);
 }
 

@@ -10,20 +10,12 @@
 
 int main(int argc,char** argv){
 
+
+
   Client_initalizer initializer = Factory::Create_Initializer();
 
   //we inject the dependencies in the function
   Argument_data data = initializer.Initialize(argc,argv,Factory::Create_Argument_Manager(),Factory::Create_Argument_Validator());
-//  Syncronizer syncronizer = Factory::Create_Syncronizer();
-//  syncronizer.Syncronize(data);
-  Sender sender = Factory::Create_Sender();
-  sender.Send_data(1, data,Log_file_handler(data.getLog_file_name(),data.getId()));
-  Receiver receiver = Factory::Create_Receiver();
-  receiver.Receive_data(1, data, Log_file_handler(data.getLog_file_name(),data.getId()));
-
-
-  sleep(10);
-
-  Cleaner cleaner = Factory::Create_cleaner();
-  cleaner.clean(data);
+  Syncronizer syncronizer = Factory::Create_Syncronizer();
+  syncronizer.Syncronize(data);
 }

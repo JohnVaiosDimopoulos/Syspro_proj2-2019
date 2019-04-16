@@ -1,6 +1,8 @@
 #include "Read_Write_handler.h"
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <sys/select.h>
 
 //==CONSTRUCTOR-DESTRUCTOR==//
 
@@ -35,34 +37,36 @@ bool Read_Write_handler::Read_and_check_no_timeout(const int &file_desc, void *b
 
 }
 
-bool Read_Write_handler::Read_and_check_with_timeout(const int &fle_desc, void *buffer, const size_t &size) {
+bool Read_Write_handler::Read_and_check_with_timeout(const int &file_desc, void *buffer, const size_t &size) {
+  fd_set set;
+  timeval tv;
+  Set_up_fd_set(file_desc, set, tv);
 
-  int sec_waited=0;
-  size_t read_ret_value;
+  // we wait 30 sec until there is inptup
+  int ret_val = select(file_desc+1,&set,NULL,NULL,&tv);
 
-  while (1){
-
-    if(sec_waited>30){
-      kill(getppid(),SIGUSR2);
-      handler->Terminating_Error("proccess timed out");
-    }
-
-    read_ret_value = read(fle_desc,buffer,size);
-
-    if(read_ret_value<0){
-      if(read_ret_value==-1 && errno==EAGAIN){
-      sec_waited++;
-      continue;
-      }
-      else{
-        kill(getppid(),SIGUSR1);
-        handler->Terminating_Error("read with timeout failed");
-      }
-    }
-    else
-      return read_ret_value;
+  if(ret_val==-1){
+    // no input within 30sec
+    kill(getppid(),SIGUSR1);
+    handler->Terminating_Error("Select failed");
+  }
+  else if(ret_val){
+    return Read_and_check_no_timeout(file_desc,buffer,size);
+  }
+  else{
+    //other error
+    kill(getppid(),SIGUSR1);
+    handler->Terminating_Error("READER TIMEOUT");
   }
 
+
+}
+
+void Read_Write_handler::Set_up_fd_set(const int &file_desc, fd_set &set, timeval &tv) const {
+  FD_ZERO(&set);
+  FD_SET(file_desc, &set);
+  tv.tv_sec = 30;
+  tv.tv_usec = 0;
 }
 
 

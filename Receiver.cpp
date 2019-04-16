@@ -13,26 +13,23 @@
 //==API==//
 int Receiver::Receive_data(const int &client_id, const Argument_data &data, Log_file_handler log_file_handler) {
 
- int pid = do_fork();
- if(pid)
+  // father gets the pid of the child
+  int pid = do_fork();
+  if(pid)
     return pid;
 
+  //child continues
   //1.make the proper_dir
   char* root_dir_name = Create_dir_for_sender_in_mirror(client_id,data.getMirror_dir_name());
   //2.open the fifo;
   fifo_handler->Open_fifo_at_receiver_non_blocking(client_id, data);
   Get_input(root_dir_name,&log_file_handler);
-  //send_succes signal;
-
   //2. deallocate
   fifo_handler->Close_fifo();
   fifo_handler->Delete_fifo();
   free(root_dir_name);
-  kill(getppid(),SIGCHLD);
-  exit(0);
+  exit(1);
 }
-
-
 
 //==CONSTRUCTOR-DESTRUCTOR===//
 
@@ -51,7 +48,7 @@ Receiver::~Receiver() {
 
 //==INNER-FUNCTIONALITY==//
 
-bool Receiver::do_fork() {
+int Receiver::do_fork() {
   pid_t pid;
   if((pid=fork())==-1)
     handler->Terminating_Error("Fork failed");
@@ -86,16 +83,20 @@ char *Receiver::Construct_new_dir_path_name(const int &client_id, const char *mi
 
 void Receiver::Get_input(const char *root_dir_name, Log_file_handler *log_file_handler) {
 
-  bool input_done= false;
-  fifo_handler->Set_to_Non_blocking();
-  while (!input_done){
+
+  //continue reading until you get 00
+  while (true){
+    //read the filename
     char* filename = Read_filename();
+    // if input is done we read 00 in Read_filename and we returnd
     if(filename==NULL)
       return;
-
+    //construct the pathname for the file we just read
     char* file_full_path_name = Construct_full_file_path_name(filename,root_dir_name);
     u_int32_t file_size = Read_file_size();
+    // start reading the file data
     Read_from_pipe_and_write_in_file(file_full_path_name, file_size);
+    //for we send write in the log
     log_file_handler->Log_Received_file(file_size);
 
     free(file_full_path_name);
@@ -139,6 +140,7 @@ char *Receiver::Construct_full_file_path_name(char *filename, const char *full_p
 
 void Receiver::Read_from_pipe_and_write_in_file(const char *file_path_name, const u_int32_t &file_size) {
 
+  //open the file to write
   int file_fd = open(file_path_name,O_CREAT|O_WRONLY);
   if(file_size==0)
     return;
@@ -151,7 +153,7 @@ void Receiver::Read_from_pipe_and_write_in_file(const char *file_path_name, cons
 
   char buffer[local_buffer_size];
 
-
+  // read and write in the file until inptut is done
   while(fifo_handler->Read_in_fifo_with_custom_buffer_size_with_timeout(local_buffer_size,buffer)){
     read_write_handler->Write_and_check(file_fd,buffer,local_buffer_size);
     bytes_left_to_receive=Calculate_bytes_left(bytes_left_to_receive,local_buffer_size);

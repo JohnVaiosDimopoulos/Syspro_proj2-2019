@@ -27,6 +27,8 @@ Clients_List::Clients_List(const Clients_List &src) {
 
 void Clients_List::Insert(int id) {
 
+  //insert element on top
+
   Client_list_node* new_node = new Client_list_node(id);
 
   if(Is_Empty())
@@ -36,16 +38,6 @@ void Clients_List::Insert(int id) {
 
 }
 
-void Clients_List::Print() {
-
-  Client_list_node* current = head;
-  while (current!=NULL){
-    std::cout<<current->getId()<<"->";
-    current=current->getNext();
-  }
-  std::cout<<std::endl;
-
-}
 
 
 bool Clients_List::Delete(int id) {

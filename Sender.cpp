@@ -42,8 +42,7 @@ int Sender::Send_data(const int &client_id, const Argument_data &data, Log_file_
 
   //close the pipe
   fifo_handler->Close_fifo();
-  kill(getppid(),SIGCHLD);
-  exit(0);
+  exit(1);
 }
 
 //==INNER-FUNCTIONALITY==//
@@ -163,8 +162,8 @@ void Sender::Send_through_pipe(const char *full_file_path,const char *file_path_
   u_int32_t file_size = stat_buf.st_size;
   u_int16_t file_name_size = strlen(file_path_relative_to_input)+1;
   //write file name size and name_relative to path
-  fifo_handler->Write_in_fifo_with_custom_buffer_size(sizeof(u_int16_t),&file_size);
-  fifo_handler->Write_in_fifo_with_custom_buffer_size(file_size,file_path_relative_to_input);
+  fifo_handler->Write_in_fifo_with_custom_buffer_size(sizeof(u_int16_t),&file_name_size);
+  fifo_handler->Write_in_fifo_with_custom_buffer_size(file_name_size,file_path_relative_to_input);
 
 
   //write file size

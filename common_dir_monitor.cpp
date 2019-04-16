@@ -5,7 +5,10 @@
 //==INNER-FUNCTIONALITY==//
 Clients_List * common_dir_monitor::get_common_state(const char *current_dir_name, int my_id) {
 
+
+  // create a new list to put the id of the .id files in common
   Clients_List* list = new Clients_List(Factory::Create_Error_Handler());
+  // open the dir
   DIR* current_directory = Check_and_open_dir(current_dir_name);
   struct dirent* dir_ptr;
 
@@ -15,13 +18,15 @@ Clients_List * common_dir_monitor::get_common_state(const char *current_dir_name
       continue;
 
     struct stat stat_buf;
+    // construct the pathname of each file
     char *file_path_name = get_file_path_name(current_dir_name, dir_ptr->d_name);
     Check_and_get_stat(&stat_buf,file_path_name);
+
     if((stat_buf.st_mode &S_IFMT)==S_IFREG){
       int id = Tokenize_id_file_name(dir_ptr->d_name);
       // we dont put our own id_file in the list
-      if(id==my_id)
-        continue;
+//      if(id==my_id)
+//        continue;
       list->Insert(id);
     }
   }
@@ -32,6 +37,7 @@ Clients_List * common_dir_monitor::get_common_state(const char *current_dir_name
 }
 
 char *common_dir_monitor::get_file_path_name(const char *common_dir_name, const char* id_file_name) const {
+
   char *file_path_name = String_Manager::Allocate(strlen(common_dir_name) + strlen(id_file_name) + 2);
   sprintf(file_path_name, "%s/%s", common_dir_name, id_file_name);
   return file_path_name;
@@ -64,7 +70,9 @@ void common_dir_monitor::Check_and_get_stat(struct stat* stat_buf,char* file_pat
 Clients_List * common_dir_monitor::find_added(Clients_List &new_state) {
 
   Clients_List* added = Factory::Create_List_in_heap();
+  // go through the new_state list
   for(Client_list_node* current = new_state.getHead();current!=NULL;current=current->getNext()){
+    // each element that is not in the old state is added to the list that we return
     if(old_dir_state.Search(current->getId())==NULL){
       added->Insert(current->getId());
     }
@@ -75,7 +83,9 @@ Clients_List * common_dir_monitor::find_added(Clients_List &new_state) {
 Clients_List * common_dir_monitor::find_deleted(Clients_List &new_state){
 
   Clients_List* deleted = Factory::Create_List_in_heap();
+  // go through the old_state list
   for(Client_list_node* current = old_dir_state.getHead();current!=NULL;current=current->getNext()){
+    // each element that is not in the new state is added to the list that we return
     if(new_state.Search(current->getId())==NULL){
       deleted->Insert(current->getId());
     }
@@ -95,7 +105,10 @@ Clients_List **common_dir_monitor::Allocate_array_to_return() const {
 
 void common_dir_monitor::update_old_state(Clients_List &new_state) {
 
-  old_dir_state=new_state;
+  if(new_state.getHead()==NULL)
+    old_dir_state.setHead(NULL);
+  else
+    old_dir_state=new_state;
 
 }
 
@@ -103,10 +116,13 @@ void common_dir_monitor::update_old_state(Clients_List &new_state) {
 //==API==//
 Clients_List** common_dir_monitor::update(const char *common_dir_name, int my_id) {
 
+  // we get a list with all the ids in the common
   Clients_List* new_state = get_common_state(common_dir_name,my_id);
+  // we will rerturn an arry of two lists one with the ids of the new clients and one with the ids of the clients that left
   Clients_List** array_to_return = Allocate_array_to_return();
   array_to_return[0]=find_added(*new_state);
   array_to_return[1]=find_deleted(*new_state);
+  // we update the state of the common
   update_old_state(*new_state);
   delete new_state;
   return array_to_return;

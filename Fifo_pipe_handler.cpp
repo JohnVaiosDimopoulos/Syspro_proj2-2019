@@ -22,12 +22,14 @@ Fifo_pipe_handler::~Fifo_pipe_handler() {
 
 //==API==//
 
+// this is used in sender
 void Fifo_pipe_handler::Make_and_open_fifo(const int &receiver_id, const Argument_data &data) {
 
   fifo_path_name = Construct_fifo_name_for_sender(receiver_id, data);
   Make_fifo(fifo_path_name);
   fifo_fd= Get_fifo_fd_for_sender(fifo_path_name);
 
+  // we keep the buffer size in order to write and read
   this->buffer_size = data.getBuffer_size();
 }
 
@@ -58,17 +60,11 @@ void Fifo_pipe_handler::Close_fifo() {
 }
 
 void Fifo_pipe_handler::Delete_fifo() {
-  std::cout<<"deleting fifo"<<std::endl;
   if(remove(fifo_path_name)==-1){
     kill(getppid(),SIGUSR1);
     error_handler->Terminating_Error("failed to remove fifo");
   }
 }
-
-void Fifo_pipe_handler::Set_to_Non_blocking() {
-  fcntl(this->fifo_fd,F_SETFD,O_NONBLOCK);
-}
-
 
 
 //==INNER-FUNCTIONALITY==//
@@ -83,6 +79,7 @@ void Fifo_pipe_handler::Make_fifo(const char *fifo_name) {
 }
 
 char *Fifo_pipe_handler::Construct_fifo_name_for_receiver(const int &sender_id, const Argument_data &data) {
+
   int pipe_path_size = Calculate_pipe_path_size(sender_id, data);
   char *fifo_name_buffer = String_Manager::Allocate(pipe_path_size);
   sprintf(fifo_name_buffer, "%s/%d_to_%d.fifo", data.getCommon_dir_name(),sender_id,data.getId());
@@ -116,11 +113,11 @@ int Fifo_pipe_handler::Calculate_pipe_path_size(const int &receiver_id, const Ar
 int Fifo_pipe_handler::Get_fifo_fd_for_sender(const char *fifo_name) {
 
   int fifo_pipe_fd;
-    if ((fifo_pipe_fd = open(fifo_name,O_WRONLY))==-1) {
-        kill(getppid(),SIGUSR1);
-        error_handler->Terminating_Error("FAILED TO OPEN FIFO PIPE IN THE SENDER");
-    }
-    return fifo_pipe_fd;
+  if ((fifo_pipe_fd = open(fifo_name,O_WRONLY))==-1) {
+      kill(getppid(),SIGUSR1);
+      error_handler->Terminating_Error("FAILED TO OPEN FIFO PIPE IN THE SENDER");
+  }
+  return fifo_pipe_fd;
 
 }
 

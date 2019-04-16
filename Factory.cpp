@@ -12,8 +12,12 @@
 #include "Fifo_pipe_handler.h"
 #include "Read_Write_handler.h"
 #include "Log_file_handler.h"
-#include "Signalfd_handler.h"
+#include "Signal_handler.h"
 #include "Status_Record.h"
+
+//we construct all the objects from here
+
+
 
 Error_Handler * Factory::Create_Error_Handler(){
   return new Error_Handler();
@@ -27,8 +31,8 @@ Arguments_Validator Factory::Create_Argument_Validator() {
   return Arguments_Validator(Create_Error_Handler());
 }
 
-Cleaner Factory::Create_cleaner() {
-  return Cleaner(Create_Error_Handler());
+Cleaner* Factory::Create_cleaner() {
+  return new Cleaner(Create_Error_Handler());
 }
 
 Client_initalizer Factory::Create_Initializer() {
@@ -71,8 +75,8 @@ Read_Write_handler * Factory::Create_read_write_handler() {
   return new Read_Write_handler(Create_Error_Handler());
 }
 
-Signalfd_handler Factory::Create_Signalfd_handler() {
-  return Signalfd_handler(Create_Error_Handler());
+Signal_handler* Factory::Create_Signalfd_handler() {
+  return new Signal_handler(Create_Error_Handler());
 }
 
 Status_Record Factory::Create_Status_Record() {

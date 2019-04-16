@@ -40,7 +40,7 @@ int Status_Record::get_clinet_from_sender(int index) {
 }
 
 int Status_Record::get_clinet_from_receiver(int index) {
-  return receivers[index].get_child_id();
+  return receivers[index].get_client_id();
 }
 
 
@@ -55,10 +55,18 @@ void Status_Record::update_receiver(int index, int new_child_id) {
 
 }
 
+void Status_Record::Set_sender_to_finished(int index) {
+  senders[index].set_current_status_to_SUCCESS();
+}
+
+void Status_Record::Set_receiver_to_finished(int index) {
+  receivers[index].set_current_status_to_SUCCESS();
+}
 
 
 bool Status_Record::Check_if_done() {
 
+  // if no element from senders nor receivers has a PENDING status we return
   for(int i =0;i<array_size;i++){
     if(senders[i].Get_status()==PENDING || receivers[i].Get_status()==PENDING){
       return false;
@@ -68,6 +76,24 @@ bool Status_Record::Check_if_done() {
 
 }
 
+bool Status_Record::can_retry_sender(int index) {
+  // check if the retries are 3
+  // if they are set status to FAILED
+  if(senders[index].get_num_of_retries()>=3){
+    senders[index].set_current_status_to_FAILED();
+    return false;
+  }
+  return true;
+}
+
+bool Status_Record::can_retry_receiver(int index) {
+  if(receivers[index].get_num_of_retries()>=3){
+    receivers[index].set_current_status_to_FAILED();
+    return false;
+  }
+
+  return true;
+}
 
 
 //==INNER-FUNCTIONALITY==//
@@ -82,7 +108,7 @@ int Status_Record::Serch_in_Senders(const int &child_id) {
 
 int Status_Record::Search_in_Receivers(const int &child_id) {
   for(int i =0;i<array_size;i++){
-    if(senders[i].get_child_id()==child_id)
+    if(receivers[i].get_child_id()==child_id)
       return i;
   }
 
@@ -90,14 +116,24 @@ int Status_Record::Search_in_Receivers(const int &child_id) {
 }
 
 bool Status_Record::Search_for_child_id_in_senders_and_receivers(const int &child_id, int *index) {
- if((*index=Search_in_Receivers(child_id)!=-1))
-   return false;
+  int res;
+  // if the child is in senders return false and put its possition in the array in index
+ if((res=Search_in_Receivers(child_id))!=-1){
+   *index = res;
+   return false;}
 
- if((*index=Serch_in_Senders(child_id))!=-1)
+  // if the child is in receivers return true and put its possition in the array in index
+  if(((*index)=Serch_in_Senders(child_id))!=-1)
    return true;
 
 
 }
+
+
+
+
+
+
 
 
 

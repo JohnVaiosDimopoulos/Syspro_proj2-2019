@@ -1,24 +1,40 @@
 #include <iostream>
+#include <unistd.h>
 #include "Deleter.h"
 #include "String_Manager.h"
 #include "Argument_data.h"
 
 //==CONSTRUCTOR-DESTRUCTOR==//
 
-Deleter::Deleter(Error_Handler_Interface *handler, Cleaner cleaner)
+Deleter::Deleter(Error_Handler_Interface *handler, Cleaner *cleaner)
     : handler(handler), cleaner(cleaner) {}
 
 Deleter::~Deleter() {
   delete handler;
+  delete cleaner;
 }
 
 //==API==//
-void Deleter::Delete(const int &client_id, const Argument_data& data,Log_file_handler log_file_handler) {
-  char* dir_to_delete = Construct_dir_to_delete_path(data.getMirror_dir_name(),client_id);
-  cleaner.Delete_dir(dir_to_delete);
-  free(dir_to_delete);
+void Deleter::Delete_client_left(const int &client_id, const Argument_data &data, Log_file_handler log_file_handler) {
+
+  if(do_fork())
+    return;
+
+  Delete_directory(client_id, data);
   log_file_handler.Log_Client_left(client_id);
+  exit(0);
 }
+
+
+void Deleter::Delete_directory(const int &client_id, const Argument_data &data) {
+  char *dir_to_delete = Construct_dir_to_delete_path(data.getMirror_dir_name(), client_id);
+  cleaner->Delete_dir(dir_to_delete);
+  free(dir_to_delete);
+}
+
+//==INNER-FUCTIONALITY==//
+
+
 
 char *Deleter::Construct_dir_to_delete_path(const char *mirror_dir_path_name, const int &client_id) {
   char client_id_buf[20];
@@ -29,3 +45,15 @@ char *Deleter::Construct_dir_to_delete_path(const char *mirror_dir_path_name, co
   return new_path;
 
 }
+
+bool Deleter::do_fork() {
+  pid_t  pid;
+  if((pid=fork())==-1)
+    handler->Terminating_Error("error");
+
+  if(pid==0)
+    return false;
+  return true;
+
+}
+

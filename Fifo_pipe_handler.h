@@ -41,7 +41,6 @@ class Fifo_pipe_handler {
   void Open_fifo_at_receiver_non_blocking(const int &client_id, const Argument_data &data);
   void Close_fifo();
   void Delete_fifo();
-  void Set_to_Non_blocking();
   int Get_buffer_size();
 
 

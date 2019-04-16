@@ -16,7 +16,7 @@ class Deleter;
 class Fifo_pipe_handler;
 class Read_Write_handler;
 class Log_file_handler;
-class Signalfd_handler;
+class Signal_handler;
 class Status_Record;
 
 class Factory {
@@ -25,7 +25,7 @@ class Factory {
   static Error_Handler * Create_Error_Handler();
   static Argument_Manager Create_Argument_Manager();
   static Arguments_Validator Create_Argument_Validator();
-  static Cleaner Create_cleaner();
+  static Cleaner* Create_cleaner();
   static Client_initalizer Create_Initializer();
   static Clients_List Create_List();
   static Clients_List* Create_List_in_heap();
@@ -36,7 +36,7 @@ class Factory {
   static Deleter Create_Deleter();
   static Fifo_pipe_handler * Create_fifo_handler();
   static Read_Write_handler * Create_read_write_handler();
-  static Signalfd_handler Create_Signalfd_handler();
+  static Signal_handler* Create_Signalfd_handler();
   static Status_Record Create_Status_Record();
 };
 

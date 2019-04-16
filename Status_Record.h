@@ -33,6 +33,10 @@ class Status_Record {
   int get_clinet_from_receiver(int index);
   void update_sender(int index, int new_child_id);
   void update_receiver(int index, int new_child_id);
+  bool can_retry_sender(int index);
+  bool can_retry_receiver(int index);
+  void Set_sender_to_finished(int index);
+  void Set_receiver_to_finished(int index);
 
 
 };

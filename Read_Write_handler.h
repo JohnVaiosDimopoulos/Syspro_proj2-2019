@@ -8,6 +8,8 @@
 class Read_Write_handler {
  private:
   Error_Handler_Interface* handler;
+  void Set_up_fd_set(const int &file_desc, fd_set &set, timeval &tv) const;
+
  public:
   //==CONSTRUCTOR-DESTRUCTOR==//
   Read_Write_handler(Error_Handler_Interface *handler);
@@ -20,9 +22,7 @@ class Read_Write_handler {
   //==API==//
   int Write_and_check(const int &file_desc, const void *buffer, const size_t &size);
   bool Read_and_check_no_timeout(const int &file_desc, void *buffer, const size_t &size);
-  bool Read_and_check_with_timeout(const int &fle_desc, void *buffer, const size_t &size);
-
-
+  bool Read_and_check_with_timeout(const int &file_desc, void *buffer, const size_t &size);
 
 };
 

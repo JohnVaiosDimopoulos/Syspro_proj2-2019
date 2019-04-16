@@ -16,6 +16,7 @@ class Arguments_Validator {
   void Input_dir_check(const Argument_data &data);
   void Common_check_and_create(const Argument_data &data);
   void Make_log_file(const char *log_file_name);
+  bool Check_if_logfile_exists(const char* log_file_name);
 
 
  public:
